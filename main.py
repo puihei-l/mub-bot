@@ -1,4 +1,4 @@
-import os, discord, asyncio, sqlite3
+import os, discord, asyncio, aiosqlite
 from discord.ext import commands
 from dotenv import load_dotenv
 
@@ -14,15 +14,17 @@ bot = commands.Bot(command_prefix="!", intents=intents, help_command=None)
 
 @bot.event
 async def on_ready():
-    bot.db = await sqlite3.connect('Coach.db')
+    bot.db = await aiosqlite.connect('Coach.db')
 
     c = await bot.db.cursor()
-    await c.execute("CREATE TABLE IF NOT EXISTS Coaches(\
-                    ID INTEGER\
-                    FirstName TEXT\
-                    LastName TEXT\
-                    Gender TEXT\
-                    Level TEXT")
+    await c.execute("""CREATE TABLE IF NOT EXISTS Coaches(
+                    ID INTEGER,
+                    FirstName TEXT,
+                    LastName TEXT,
+                    Gender TEXT,
+                    Level TEXT
+                )
+        """)
 
     await bot.db.commit()  # Save changes made in DB file
 
