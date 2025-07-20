@@ -2,6 +2,8 @@ import os, discord, asyncio, aiosqlite
 from discord.ext import commands
 from dotenv import load_dotenv
 
+LEVELS = ["BEG1", "BEG2", "INT1", "INT2", "ADV", "COM"]
+
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
 GUILD = os.getenv('DISCORD_GUILD')
@@ -34,7 +36,24 @@ async def on_ready():
                     FOREIGN KEY (class_id) REFERENCES Classes(id),
                     FOREIGN KEY (coach_id) REFERENCES Coaches(id)
                     )""")
-    await bot.db.commit()  # Save changes made in DB file
+    
+    # Semester plan (12 weeks, 192 classes in total)
+    row = await c.execute("SELECT 1 FROM Classes LIMIT 1;")
+    result = await row.fetchone()
+    print(result is None)
+    if result is None:
+        for i in range(1,13):
+            for j in range(0,4):
+                for k in range(1,7,2):
+                    await c.execute("""INSERT INTO Classes (level, week, day)
+                                    VALUES (?,?,?);""",
+                                    (LEVELS[j], i, k, ))
+            for j in range(4,6):
+                for k in range(2,6,2):
+                    await c.execute("""INSERT INTO Classes (level, week, day)
+                                    VALUES (?,?,?);""",
+                                    (LEVELS[j], i, k, ))
+    await bot.db.commit()
 
     await bot.load_extension('cogs.bot')
     print(f"Logged in - {bot.user} ({bot.user.id})")
