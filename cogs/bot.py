@@ -7,6 +7,7 @@ from .ui.button import ConfirmView
 load_dotenv()
 SECRETARY = int(os.getenv('SECRETARY_ID'))
 ADMIN = int(os.getenv('ADMIN_ID'))
+SCHEDULE_CHANNEL = int(os.getenv('SCHEDULE_ID'))
 WEEKS = 12
 
 class BotCog(commands.Cog):
@@ -228,13 +229,13 @@ class BotCog(commands.Cog):
         """
 
         if not ctx.author.id == ADMIN:
-            await ctx.send("Go away")
+            await ctx.send("You don't have permission to !assign")
             return
 
         def check(msg):
             return msg.author.id == ADMIN and msg.channel == ctx.channel
         
-        thread_name = f"Drop Request - {ctx.author.display_name}"
+        thread_name = f"Assign Request - {ctx.author.display_name}"
         thread = await ctx.channel.create_thread(
             name=thread_name,
             type=discord.ChannelType.public_thread,
@@ -278,7 +279,7 @@ class BotCog(commands.Cog):
         classLevel = classLevel.upper()
         
         embed = discord.Embed(
-            title="Shift drop request",
+            title="Shift assign request",
             color=discord.Color.dark_grey()
         )
         embed.description = f"""
@@ -321,9 +322,36 @@ class BotCog(commands.Cog):
         except asyncio.TimeoutError:
             await thread.send("You didn't reply in time, try !assign to restart")
             return
+
+        schedule = self.bot.get_channel(SCHEDULE_CHANNEL)  # get_channel gets it from cache
+        if schedule is None:
+            schedule = await self.bot.fetch_channel(SCHEDULE_CHANNEL)
+        
+        embed = discord.Embed(
+            title="Shift assign receipt",
+            color=discord.Color.dark_grey()
+        )
+        embed.description = f"""
+            **To:** {coach}
+            **Day:** {day}, Week {week}
+            **Class Level:** {classLevel}
+            """
+        embed.set_footer(text="Contact Secretary if anything is incorrect.")
+        await schedule.send(embed=embed)
         
     @commands.command()
     async def myshift(self, ctx, coach = None, day = None, week = None, classLevel = None):
+        """
+        Check your shifts
+
+        **Usage:**
+            !myshift `coach` `day` `week` `class level`
+        
+        **Example:**
+            !myshift `lenin` `2` `12` `com`
+
+        All values are optional.
+        """
         
         def check(msg):
             return msg.author == ctx.author and msg.channel == ctx.channel
@@ -355,6 +383,9 @@ class BotCog(commands.Cog):
                 if week:
                     query += " AND Classes.week = :week"
                     params["week"] = week
+                if classLevel:
+                    query += " AND Classes.level = :classLevel"
+                    params["classLevel"] = classLevel
                 
                 db.row_factory = aiosqlite.Row
                 cursor = await db.execute(query, params)
