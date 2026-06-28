@@ -16,6 +16,7 @@ jobs:
           port: 22
           username: root
           key: ${{ secrets.SSH_PRIVATE_KEY }}
+          passphrase: ${{ secrets.SSH_PASSPHRASE }}
           script: |
             cd /root/mub-bot
             git pull origin main
