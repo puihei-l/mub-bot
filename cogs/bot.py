@@ -327,7 +327,7 @@ class BotCog(commands.Cog):
 
     @app_commands.command(name="all_shifts", description="View all assigned shifts (admin only).")
     @app_commands.describe(
-        week="Week to view",
+        week="Week to view (optional — omit for all weeks)",
         day="Day filter (optional)",
         class_level="Level filter (optional)",
         coach="Coach filter (optional)",
@@ -336,7 +336,7 @@ class BotCog(commands.Cog):
     async def all_shifts(
         self,
         interaction: discord.Interaction,
-        week: app_commands.Choice[int],
+        week: app_commands.Choice[int] | None = None,
         day: app_commands.Choice[str] | None = None,
         class_level: app_commands.Choice[str] | None = None,
         coach: str | None = None,
@@ -347,16 +347,19 @@ class BotCog(commands.Cog):
 
         await interaction.response.defer(ephemeral=True)
 
-        week_v = week.value
+        week_v = week.value if week else None
         day_v = day.value if day else None
         level_v = class_level.value if class_level else None
         coach_u = coach.strip().upper() if coach else None
 
         db = self._db()
 
-        params: list[object] = [week_v]
-        where = ["Classes.week = ?"]
+        params: list[object] = []
+        where: list[str] = []
 
+        if week_v is not None:
+            where.append("Classes.week = ?")
+            params.append(week_v)
         if day_v is not None:
             where.append("Classes.day = ?")
             params.append(day_v)
@@ -374,7 +377,7 @@ class BotCog(commands.Cog):
             where.append("CoachClasses.coach_id = ?")
             params.append(coach_id)
 
-        where_sql = " AND ".join(where)
+        where_sql = ("WHERE " + " AND ".join(where)) if where else ""
 
         db.row_factory = aiosqlite.Row
         cursor = await db.execute(
@@ -382,7 +385,7 @@ class BotCog(commands.Cog):
                 FROM CoachClasses
                 JOIN Classes ON Classes.id = CoachClasses.class_id
                 JOIN Coaches ON Coaches.id = CoachClasses.coach_id
-                WHERE {where_sql}
+                {where_sql}
                 ORDER BY Classes.week, Classes.day, Classes.level, Coaches.name;""",
             params,
         )
