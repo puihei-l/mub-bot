@@ -408,15 +408,44 @@ class BotCog(commands.Cog):
     @app_commands.describe(command="Specific command name, e.g. assign")
     async def help_slash(self, interaction: discord.Interaction, command: str | None = None):
         if command is None:
-            embed = discord.Embed(title="Help - Commands", color=discord.Color.blue())
-            embed.description = "Use `/help command:<name>` for more info on a command."
+            embed = discord.Embed(
+                title="MUB Bot — Command Reference",
+                description="Use `/help command:<name>` for details on a specific command.",
+                color=discord.Color.blue(),
+            )
 
-            cmds = sorted(self.bot.tree.get_commands(), key=lambda c: c.name)
-            for cmd in cmds:
-                if cmd.name == "help":
-                    continue
-                desc = cmd.description or "No description"
-                embed.add_field(name=f"/{cmd.name}", value=desc, inline=False)
+            embed.add_field(
+                name="👤  Coach Management  (admin only)",
+                value=(
+                    "`/add_coach` — Add a new coach\n"
+                    "`/remove_coach` — Remove a coach and all their shifts\n"
+                    "`/link_coach` — Link a coach to their Discord account"
+                ),
+                inline=False,
+            )
+            embed.add_field(
+                name="📅  Shift Management  (admin only)",
+                value=(
+                    "`/assign` — Assign a single shift to a coach\n"
+                    "`/assignm` — Bulk-assign all classes on a day + level\n"
+                    "`/drop` — Drop or transfer a shift\n"
+                    "`/bulk_remove_shifts` — Remove multiple shifts at once"
+                ),
+                inline=False,
+            )
+            embed.add_field(
+                name="🔍  Viewing  (admin only)",
+                value="`/all_shifts` — View all assigned shifts with optional filters",
+                inline=False,
+            )
+            embed.add_field(
+                name="📋  General",
+                value=(
+                    "`/myshift` — Check your own assigned shifts\n"
+                    "`/help` — Show this menu"
+                ),
+                inline=False,
+            )
 
             await interaction.response.send_message(embed=embed, ephemeral=True)
             return
