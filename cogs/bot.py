@@ -689,7 +689,7 @@ class BotCog(commands.Cog):
         cursor = await db.execute("SELECT id FROM Coaches WHERE UPPER(name) = ?;", (coach_u,))
         coach_row = await cursor.fetchone()
         if coach_row is None:
-            await thread.send(f"Coach {coach_u} is not found.")
+            await interaction.followup.send(f"Coach {coach_u} is not found.", ephemeral=True)
             return
         coach_id = coach_row[0]
 
